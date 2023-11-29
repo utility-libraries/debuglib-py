@@ -1,0 +1,4 @@
+-r requirements.txt
+pip-autoremove
+build
+twine
