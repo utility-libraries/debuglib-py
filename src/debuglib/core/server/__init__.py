@@ -30,8 +30,9 @@ if msgpack:
 class DebugServer:
     _server: socket.socket
     _connections: t.Dict[int, t.Tuple[socket.socket, str, t.BinaryIO]]
+    _on_connection_open: t.List[t.Callable[[str], None]]
+    _on_connection_closed: t.List[t.Callable[[str], None]]
     _on_message: t.List[t.Callable[[Message, str], None]]
-    _on_connection: t.List[t.Callable[[str], None]]
     _shutdown_requested: bool
     _is_shut_down: threading.Event
 
@@ -39,7 +40,8 @@ class DebugServer:
         self._server = socket.create_server(address=extract_server_info(server_info))
         self._connections = {}
         self._on_message = []
-        self._on_connection = []
+        self._on_connection_open = []
+        self._on_connection_closed = []
         self._shutdown_requested = False
         self._is_shut_down = threading.Event()
 
@@ -65,14 +67,18 @@ class DebugServer:
         self._shutdown_requested = True
         self._is_shut_down.wait()
 
-    def on_connection(self, callback: t.Callable[[str], None]):
-        self._on_connection.append(callback)
+    def on_connection_open(self, callback: t.Callable[[str], None]):
+        self._on_connection_open.append(callback)
+
+    def on_connection_closed(self, callback: t.Callable[[str], None]):
+        self._on_connection_closed.append(callback)
 
     def on_message(self, callback: t.Callable[[Message], None]):
         self._on_message.append(callback)
 
     def _handle_new_connection(self):
-        connection, client_address = self._server.accept()
+        connection, client_info = self._server.accept()
+        client_address: str = client_info[0]
         rfile = connection.makefile('rb', -1)
 
         # @handshake
@@ -89,13 +95,17 @@ class DebugServer:
             connection.close()
         connection.sendall(b'1')  # accept the connection
 
-        for callback in self._on_connection:
+        for callback in self._on_connection_open:
             callback(client_address)
         self._connections[connection.fileno()] = (connection, client_address, rfile)
 
     def _handle_one_message(self, fd: int):
         sock, client_address, rfile = self._connections[fd]
         body_format_identifier = rfile.read(1)
+        if not body_format_identifier:  # b''
+            self._close_connection(fd=fd)
+            return
+
         length = int.from_bytes(rfile.read(2), byteorder='big', signed=False)
         body = rfile.read(length)
         body_parser = BODY_PARSER.get(body_format_identifier)
@@ -105,3 +115,11 @@ class DebugServer:
         message: Message = body_parser(body)
         for callback in self._on_message:
             callback(message, client_address)
+
+    def _close_connection(self, fd: int):
+        sock, client_address, rfile = self._connections[fd]
+        rfile.close()
+        sock.close()
+        del self._connections[fd]
+        for callback in self._on_connection_closed:
+            callback(client_address)
