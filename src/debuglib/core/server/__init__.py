@@ -29,7 +29,7 @@ if msgpack:
 
 class DebugServer:
     _server: socket.socket
-    _connections: t.Dict[socket.socket, t.Tuple[str, t.BinaryIO]]
+    _connections: t.Dict[int, t.Tuple[socket.socket, str, t.BinaryIO]]
     _on_message: t.List[t.Callable[[Message, str], None]]
     _on_connection: t.List[t.Callable[[str], None]]
     _shutdown_requested: bool
@@ -48,16 +48,15 @@ class DebugServer:
         self._is_shut_down.clear()
         try:
             while not self._shutdown_requested:
-                ready, *_ = select.select([self._server, *self._connections.keys()], [], [], 0.1)
+                readable, *_ = select.select([self._server, *self._connections], [], [], 0.1)
                 # bpo-35017: shutdown() called during select(), exit immediately.
                 if self._shutdown_requested:
                     break
-                if ready:
-                    for sock in ready:
-                        if sock is self._server:
-                            self._handle_new_connection()
-                        else:
-                            self._handle_one_message(sock)
+                for fd in readable:
+                    if fd is self._server:
+                        self._handle_new_connection()
+                    else:
+                        self._handle_one_message(fd)
         finally:
             self._shutdown_requested = False
             self._is_shut_down.set()
@@ -92,10 +91,10 @@ class DebugServer:
 
         for callback in self._on_connection:
             callback(client_address)
-        self._connections[connection] = (client_address, rfile)
+        self._connections[connection.fileno()] = (connection, client_address, rfile)
 
-    def _handle_one_message(self, sock: socket.socket):
-        client_address, rfile = self._connections[sock]
+    def _handle_one_message(self, fd: int):
+        sock, client_address, rfile = self._connections[fd]
         body_format_identifier = rfile.read(1)
         length = int.from_bytes(rfile.read(2), byteorder='big', signed=False)
         body = rfile.read(length)
