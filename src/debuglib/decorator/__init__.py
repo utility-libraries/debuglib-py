@@ -14,3 +14,4 @@ my_function(1, 2)
 > call my_funtion(1, 2)
     > ValueError: bad numbers
 """
+from .decorator import Decorator

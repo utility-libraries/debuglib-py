@@ -3,15 +3,16 @@ r"""
 
 """
 import time
-import logging
 import functools
 from itertools import chain
 from inspect import iscoroutinefunction, getmodule
+from ..core.client import DebugClient
+from ..typing import ServerInfoRaw
 
 
 class Decorator:
-    def __init__(self):
-        pass
+    def __init__(self, server: ServerInfoRaw = None):
+        self._client = DebugClient(server=server)
 
     @staticmethod
     def _function_repr(fn, args, kwargs):
@@ -32,12 +33,16 @@ class Decorator:
                     try:
                         value = await fn(*args, **kwargs)
                         total_time = time.perf_counter() - start_time
-                        logging.debug(f"{fn_repr} returned {value!r} after {total_time}s")
+                        self._client.send(
+                            message=f"{fn_repr} returned {value!r} after {total_time}s",
+                        )
                         return value
                     except BaseException as error:
                         total_time = time.perf_counter() - start_time
-                        logging.error(f"{fn_repr} failed with {type(error).__name__} after {total_time}s",
-                                      exc_info=error)
+                        self._client.send(
+                            message=f"{fn_repr} failed with {type(error).__name__} after {total_time}s",
+                            exception=error,
+                        )
                         raise error
             else:
                 @functools.wraps(fn)
@@ -47,16 +52,20 @@ class Decorator:
                     try:
                         value = fn(*args, **kwargs)
                         total_time = time.perf_counter() - start_time
-                        logging.debug(f"{fn_repr} returned {value!r} after {total_time}s")
+                        self._client.send(
+                            message=f"{fn_repr} returned {value!r} after {total_time}s",
+                        )
                         return value
                     except BaseException as error:
                         total_time = time.perf_counter() - start_time
-                        logging.error(f"{fn_repr} failed with {type(error).__name__} after {total_time}s",
-                                      exc_info=error)
+                        self._client.send(
+                            message=f"{fn_repr} failed with {type(error).__name__} after {total_time}s",
+                            exception=error,
+                        )
                         raise error
             return wrapper
         return decorator
 
 
 def monitor(*args, **kwargs):
-    return Decorator(*args, **kwargs).monitor
+    return Decorator(*args, **kwargs).monitor()
