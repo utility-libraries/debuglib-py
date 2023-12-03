@@ -61,7 +61,7 @@ class DebugServer:
         self._is_shut_down.clear()
         try:
             while not self._shutdown_requested:
-                readable, *_ = select.select([self._server, *self._connections], [], [], 0.1)
+                readable, *_ = select.select([self._server, *self._connections], [], [], 0.5)
                 # bpo-35017: shutdown() called during select(), exit immediately.
                 if self._shutdown_requested:
                     break
