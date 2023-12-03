@@ -52,7 +52,7 @@ class DebugClient:
         self._conn = conn = self._conn or self.create_connection()
         if conn is None:
             return
-        message = self.build_message(message=message, body=body, exception=exception)
+        message = self.build_message(message=message, body=body, exception=exception, timestamp=timestamp)
         body = self.format_message(message)
         try:
             conn.sendall(body)
