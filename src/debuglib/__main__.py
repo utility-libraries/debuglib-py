@@ -24,7 +24,11 @@ def cmd_listen(host: str = None, port: int = None):
     listener.run()
 
 
-listen_parser = subparser.add_parser(name="listen", formatter_class=ap.ArgumentDefaultsHelpFormatter)
+listen_parser = subparser.add_parser(
+    name="listen",
+    description="simply listen for new messages and print them to the terminal/console",
+    formatter_class=ap.ArgumentDefaultsHelpFormatter,
+)
 listen_parser.set_defaults(fn=cmd_listen)
 listen_parser.add_argument('--host', type=str, default=DEFAULT_SERVER_HOST,
                            help='host to bind to')
