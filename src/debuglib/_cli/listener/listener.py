@@ -36,7 +36,7 @@ class CLIListener:
 
     @staticmethod
     def on_message(message: Message, client: str):
-        ts = datetime.fromtimestamp(message['timestamp']).strftime("%M:%S.%f")
+        ts = datetime.fromtimestamp(message['timestamp']).strftime("%H:%M:%S.%f")
         print(f"{ts} | {client} | {message['message']}")
         body = message['body']
         exception_info = message['exception_info']
