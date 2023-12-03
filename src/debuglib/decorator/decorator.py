@@ -6,13 +6,13 @@ import time
 import functools
 from itertools import chain
 from inspect import iscoroutinefunction, getmodule
-from ..core.client import DebugClient
+from ..core import DebugClient
 from ..typing import ServerInfoRaw
 
 
 class Decorator:
     def __init__(self, server: ServerInfoRaw = None):
-        self._client = DebugClient(server=server)
+        self._client = DebugClient(server_info=server)
 
     def __del__(self):
         self._client.close()
