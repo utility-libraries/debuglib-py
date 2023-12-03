@@ -40,12 +40,12 @@ class CLIListener:
         print(f"{ts} | {client} | {message['message']}")
         body = message['body']
         exception_info = message['exception_info']
-        if body or exception_info:
-            print(f"=" * 80)
         if body:
+            print(f"-" * 80)
             print(body)
-            print(f"=" * 80)
         if exception_info:
+            print(f"-" * 80)
             print(exception_info['traceback'])
             print(f"{exception_info['type']}: {exception_info['value']}")
+        if body or exception_info:
             print(f"=" * 80)
