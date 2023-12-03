@@ -26,16 +26,20 @@ except ModuleNotFoundError:
     from json import dumps as dump_body
     body_format_identifier = b'j'
 try:
-    from better_exceptions import format_exception
+    from better_exceptions.formatter import ExceptionFormatter
+
+    def format_traceback(tb):
+        formatter = ExceptionFormatter()
+        return [formatter.format_traceback(tb)[0]]
 except ModuleNotFoundError:
-    from traceback import format_exception
+    from traceback import format_tb as format_traceback
 
 
 class DebugClient:
     _conn: t.Optional[socket.socket]
 
-    def __init__(self, *, server: ServerInfoRaw = None, timeout: float = None):
-        self._server_info: ServerInfo = extract_server_info(server)
+    def __init__(self, *, server_info: ServerInfoRaw = None, timeout: float = None):
+        self._server_info: ServerInfo = extract_server_info(server_info)
         self._timeout: float = timeout
         self._conn = None
         self._queue = None
@@ -72,7 +76,7 @@ class DebugClient:
             exception_info=dict(
                 type=type(exception).__name__,
                 value=str(exception),
-                traceback='\n'.join(format_exception(exception)),
+                traceback='\n'.join(format_traceback(exception.__traceback__)),
             ) if isinstance(exception, BaseException) else None,
             timestamp=time.time() if timestamp is None else timestamp,
         )
