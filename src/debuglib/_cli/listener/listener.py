@@ -38,3 +38,14 @@ class CLIListener:
     def on_message(message: Message, client: str):
         ts = datetime.fromtimestamp(message['timestamp']).strftime("%M:%S.%f")
         print(f"{ts} | {client} | {message['message']}")
+        body = message['body']
+        exception_info = message['exception_info']
+        if body or exception_info:
+            print(f"=" * 80)
+        if body:
+            print(body)
+            print(f"=" * 80)
+        if exception_info:
+            print(exception_info['traceback'])
+            print(f"{exception_info['type']}: {exception_info['value']}")
+            print(f"=" * 80)
