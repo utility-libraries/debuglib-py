@@ -2,7 +2,10 @@
 
 python debugger tool with easy integration into any program
 
-> Nothing is done yet
+> Installation currently only from source as the project is under development
+> 
+> To install the development version and test everything use:  
+> `pip3 install git+https://github.com/utility-libraries/debuglib-py.git@dev#egg=debuglib[dev]`
 
 ## Installation
 
@@ -19,14 +22,56 @@ pip install debuglib
 | `debuglib[cli]`     | required to run the CLI Debugger |
 | `debuglib[all]`     | installs all of the ones above   |
 
-## Example
+## Examples
 
-> Note: soon there will be integration with the logging module
+> Note: soon there will be a proper integration with the logging module
+
+### 1: logging
+
+`code.py`
+```python
+import logging
+from debuglib.logging import BlockingDebugHandler
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    handlers=[BlockingDebugHandler()],
+)
+
+logging.info("Hello World")
+try:
+    num = "Hi"
+    print(int(num))
+except ValueError as error:
+    logging.error("failed to convert to integer", exc_info=error)
+```
+
+```bash
+$ debuglib listen  # and start the script in another terminal
+New Connection from 127.0.0.1 (localhost)
+23:48:42.183558 | 127.0.0.1 | INFO | Hello World
+23:48:42.184598 | 127.0.0.1 | ERROR | failed to convert to integer
+--------------------------------------------------------------------------------
+  File "/home/<user>/code.py", line 12, in <module>
+    print(int(num))
+              └ 'Hi'
+
+ValueError: invalid literal for int() with base 10: 'Hi'
+================================================================================
+Connection closed from 127.0.0.1 (localhost)
+```
+
+### 2: function monitoring
+
+> Note: the monitor decorator
 
 `code.py`
 ```python
 from debuglib.decorator import Decorator as DebugDecorator
+# from debuglib.decorator import monitor  # shorthand if you only use it once
 
+# better performance than the single `monitor` decorator as everything 
+# registered with debugger.monitor() shares the same connection
 debugger = DebugDecorator()
 
 @debugger.monitor()
