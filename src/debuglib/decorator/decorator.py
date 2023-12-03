@@ -14,6 +14,9 @@ class Decorator:
     def __init__(self, server: ServerInfoRaw = None):
         self._client = DebugClient(server=server)
 
+    def __del__(self):
+        self._client.close()
+
     @staticmethod
     def _function_repr(fn, args, kwargs):
         args_repr = map(repr, args)

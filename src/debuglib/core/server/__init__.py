@@ -27,12 +27,17 @@ if msgpack:
     BODY_PARSER[b'm'] = msgpack.loads
 
 
+TC_CONNECTION_OPEN = t.Callable[[str], None]
+TC_CONNECTION_CLOSED = t.Callable[[str], None]
+TC_MESSAGE = t.Callable[[Message, str], None]
+
+
 class DebugServer:
     _server: socket.socket
     _connections: t.Dict[int, t.Tuple[socket.socket, str, t.BinaryIO]]
-    _on_connection_open: t.List[t.Callable[[str], None]]
-    _on_connection_closed: t.List[t.Callable[[str], None]]
-    _on_message: t.List[t.Callable[[Message, str], None]]
+    _on_connection_open: t.List[TC_CONNECTION_OPEN]
+    _on_connection_closed: t.List[TC_CONNECTION_CLOSED]
+    _on_message: t.List[TC_MESSAGE]
     _shutdown_requested: bool
     _is_shut_down: threading.Event
 
@@ -44,6 +49,12 @@ class DebugServer:
         self._on_connection_closed = []
         self._shutdown_requested = False
         self._is_shut_down = threading.Event()
+
+    def __del__(self):
+        self.close()
+
+    def close(self):
+        self._server.close()
 
     def serve_forever(self):
         self._shutdown_requested = False
@@ -67,13 +78,13 @@ class DebugServer:
         self._shutdown_requested = True
         self._is_shut_down.wait()
 
-    def on_connection_open(self, callback: t.Callable[[str], None]):
+    def on_connection_open(self, callback: TC_CONNECTION_OPEN):
         self._on_connection_open.append(callback)
 
-    def on_connection_closed(self, callback: t.Callable[[str], None]):
+    def on_connection_closed(self, callback: TC_CONNECTION_CLOSED):
         self._on_connection_closed.append(callback)
 
-    def on_message(self, callback: t.Callable[[Message], None]):
+    def on_message(self, callback: TC_MESSAGE):
         self._on_message.append(callback)
 
     def _handle_new_connection(self):

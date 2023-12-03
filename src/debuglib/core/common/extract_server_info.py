@@ -13,8 +13,8 @@ def extract_server_info(info: ServerInfoRaw) -> ServerInfo:
         return info, DEFAULT_SERVER_PORT
     elif isinstance(info, int):  # port specified
         return DEFAULT_SERVER_HOST, info
-    elif (isinstance(info, tuple) and len(info) == 2
-          and isinstance(info[0], str) and isinstance(info[1], int)):  # properly specified
-        return info
+    elif isinstance(info, tuple) and len(info) == 2:
+        host, port = info
+        return host or DEFAULT_SERVER_HOST, port or DEFAULT_SERVER_PORT
     else:
         raise ValueError(f"unknown server specification: {info!r}")

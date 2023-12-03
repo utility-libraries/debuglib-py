@@ -40,6 +40,13 @@ class DebugClient:
         self._conn = None
         self._queue = None
 
+    def __del__(self):
+        self.close()
+
+    def close(self):
+        if self._conn is not None:
+            self._conn.close()
+
     def send(self, message: str,
              *, body: t.Optional[str] = None, exception: t.Optional[BaseException] = None, timestamp: float = None):
         self._conn = conn = self._conn or self.create_connection()
