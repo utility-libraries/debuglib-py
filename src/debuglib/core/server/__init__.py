@@ -2,11 +2,12 @@
 r"""
 
 """
+import sys
+import json
 import socket
 import select
 import threading
 import typing as t
-import json
 # noinspection PyPep8Naming
 from ... import __version__ as DEBUGLIB_VERSION
 from ...typing import ServerInfoRaw, Message
@@ -15,6 +16,10 @@ try:
     import msgpack
 except ModuleNotFoundError:
     msgpack = None
+try:
+    from better_exceptions import format_exception
+except ModuleNotFoundError:
+    from traceback import format_exception
 
 # import socketserver
 # socketserver.BaseServer.serve_forever
@@ -87,6 +92,14 @@ class DebugServer:
     def on_message(self, callback: T_CB_MESSAGE):
         self._on_message.append(callback)
 
+    @staticmethod
+    def _call_no_error(fn: t.Callable, *args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except Exception as error:
+            # yeah. we don't have a better way. Maybe `on_error` callback system
+            sys.stderr.write('\n'.join(format_exception(type(error), error, error.__traceback__)))
+
     def _handle_new_connection(self):
         connection, client_info = self._server.accept()
         client: str = ':'.join(client_info)  # ip:port
@@ -107,7 +120,7 @@ class DebugServer:
         connection.sendall(b'1')  # accept the connection
 
         for callback in self._on_connection_open:
-            callback(client)
+            self._call_no_error(callback, client)
         self._connections[connection.fileno()] = (connection, client, rfile)
 
     def _handle_one_message(self, fd: int):
@@ -125,7 +138,7 @@ class DebugServer:
             return
         message: Message = body_parser(body)
         for callback in self._on_message:
-            callback(message, client)
+            self._call_no_error(callback, message, client)
 
     def _close_connection(self, fd: int):
         sock, client, rfile = self._connections[fd]
@@ -133,4 +146,4 @@ class DebugServer:
         sock.close()
         del self._connections[fd]
         for callback in self._on_connection_closed:
-            callback(client)
+            self._call_no_error(callback, client)
