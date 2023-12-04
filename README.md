@@ -5,7 +5,7 @@ python debugger tool with easy integration into any program
 > Installation currently only from source as the project is under development
 > 
 > To install the development version and test everything use:  
-> `pip3 install git+https://github.com/utility-libraries/debuglib-py.git@dev#egg=debuglib[dev]`
+> `pip3 install git+https://github.com/utility-libraries/debuglib-py.git@dev#egg=debuglib[all]`
 
 ## Installation
 
