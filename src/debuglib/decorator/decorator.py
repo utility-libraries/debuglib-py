@@ -17,6 +17,9 @@ class Decorator:
     def __del__(self):
         self._client.close()
 
+    def reset_connection(self):
+        self._client.close()
+
     @staticmethod
     def _function_repr(fn, args, kwargs):
         args_repr = map(repr, args)

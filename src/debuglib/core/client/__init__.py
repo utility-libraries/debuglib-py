@@ -50,6 +50,7 @@ class DebugClient:
     def close(self):
         if self._conn is not None:
             self._conn.close()
+            self._conn = None
 
     def send(self, message: str,
              *, body: t.Optional[str] = None, exception: t.Optional[BaseException] = None, timestamp: float = None):
