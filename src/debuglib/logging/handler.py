@@ -2,13 +2,18 @@
 r"""
 logging-handler to send messages to the debug-server
 """
-import logging
+import copy
+import queue
+import logging.handlers
 from ..typing import ServerInfoRaw
 from ..core import DebugClient
 
 
 class BlockingDebugHandler(logging.Handler):
-    # creates connection to server
+    r"""
+    Logging-Handler that blocks as it waits till the message is sent to the server (if the server exists)
+    """
+
     def __init__(self, server_info: ServerInfoRaw = None):
         super().__init__()
         self._client = DebugClient(server_info=server_info)
@@ -22,6 +27,21 @@ class BlockingDebugHandler(logging.Handler):
         )
 
 
-class NonBlockingDebugHandler(logging.Handler):
-    # works with queue (logging.handlers.QueueListener)
-    pass
+class NonBlockingDebugHandler(logging.handlers.QueueHandler):
+    r"""
+    Logging-Handler for high-performance code that queues the logs and sends them in another thread to the server
+    """
+
+    def __init__(self, server_info: ServerInfoRaw = None):
+        self._queue = queue.Queue()
+        super().__init__(self._queue)
+        self.__blocking_handler = BlockingDebugHandler(server_info=server_info)
+        self._listener = logging.handlers.QueueListener(self._queue, self.__blocking_handler)
+        self._listener.start()
+
+    def __del__(self):
+        self._listener.stop()
+
+    # custom one as the original removes unpickleable elements but we don't pickle
+    def prepare(self, record: logging.LogRecord) -> logging.LogRecord:
+        return copy.copy(record)
