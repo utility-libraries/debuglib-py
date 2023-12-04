@@ -28,11 +28,11 @@ class CLIListener:
 
     @staticmethod
     def on_connection_open(client: str):
-        print(f"New Connection from {client} ({socket.getfqdn(client)})")
+        print(f"New Connection from {client} ({socket.getfqdn(client.partition(':')[0])})")
 
     @staticmethod
     def on_connection_closed(client: str):
-        print(f"Connection closed from {client} ({socket.getfqdn(client)})")
+        print(f"Connection closed from {client} ({socket.getfqdn(client.partition(':')[0])})")
 
     @staticmethod
     def on_message(message: Message, client: str):
