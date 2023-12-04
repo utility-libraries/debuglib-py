@@ -24,7 +24,9 @@ pip install debuglib
 
 ## Examples
 
-> Note: soon there will be a proper integration with the logging module
+> Note: there is no need for a server to run/exist.
+> That way you don't have to change anything when going into production
+> but would still have the option to monitor when errors occur.
 
 ### 1: logging
 
