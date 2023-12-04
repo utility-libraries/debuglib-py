@@ -35,6 +35,7 @@ if msgpack:
 T_CB_CONNECTION_OPEN = t.Callable[[str], None]
 T_CB_CONNECTION_CLOSED = t.Callable[[str], None]
 T_CB_MESSAGE = t.Callable[[Message, str], None]
+T_CB_ERROR = t.Callable[[Exception], None]
 
 
 class DebugServer:
@@ -43,15 +44,19 @@ class DebugServer:
     _on_connection_open: t.List[T_CB_CONNECTION_OPEN]
     _on_connection_closed: t.List[T_CB_CONNECTION_CLOSED]
     _on_message: t.List[T_CB_MESSAGE]
+    _on_error: t.List[T_CB_ERROR]
+    _skip_version_check: bool
     _shutdown_requested: bool
     _is_shut_down: threading.Event
 
-    def __init__(self, server_info: ServerInfoRaw = None):
+    def __init__(self, server_info: ServerInfoRaw = None, *, skip_version_check: bool = False):
         self._server = socket.create_server(address=extract_server_info(server_info))
         self._connections = {}
         self._on_message = []
+        self._on_error = []
         self._on_connection_open = []
         self._on_connection_closed = []
+        self._skip_version_check = skip_version_check
         self._shutdown_requested = False
         self._is_shut_down = threading.Event()
 
@@ -92,17 +97,28 @@ class DebugServer:
     def on_message(self, callback: T_CB_MESSAGE):
         self._on_message.append(callback)
 
-    @staticmethod
-    def _call_no_error(fn: t.Callable, *args, **kwargs):
+    def on_error(self, callback: T_CB_ERROR):
+        self._on_error.append(callback)
+
+    def _handle_error(self, err: Exception):
+        if not self._on_error:  # no error handler registered
+            sys.stderr.write('\n'.join(format_exception(type(err), err, err.__traceback__)))
+        else:
+            for callback in self._on_error:
+                try:
+                    callback(err)
+                except Exception as err:
+                    sys.stderr.write('\n'.join(format_exception(type(err), err, err.__traceback__)))
+
+    def _call_no_error(self, fn: t.Callable, *args, **kwargs):
         try:
             return fn(*args, **kwargs)
         except Exception as error:
-            # yeah. we don't have a better way. Maybe `on_error` callback system
-            sys.stderr.write('\n'.join(format_exception(type(error), error, error.__traceback__)))
+            self._handle_error(error)
 
     def _handle_new_connection(self):
         connection, client_info = self._server.accept()
-        client: str = ':'.join(client_info)  # ip:port
+        client: str = f"{client_info[0]}:{client_info[1]}"  # ip:port
         rfile = connection.makefile('rb', -1)
 
         # @handshake
@@ -110,13 +126,20 @@ class DebugServer:
         head = b'DEBUGLIB\0'
         if rfile.read(len(head)) != head:
             connection.close()
+            self._handle_error(ConnectionError("bad connection attempt was made"))
+            return
         # compare versions (could be improved to only check major.minor)
         version_length = int.from_bytes(rfile.read(1), byteorder='big', signed=False)
-        if rfile.read1(version_length) != DEBUGLIB_VERSION.encode():
+        version = rfile.read1(version_length).decode()
+        if not self._skip_version_check and version != DEBUGLIB_VERSION:
             connection.close()
+            self._handle_error(ConnectionError(f"version mismatch ({version} != {DEBUGLIB_VERSION})"))
+            return
         # trailing head to ensure everything was read correctly
         if rfile.read(1) != '\0':
             connection.close()
+            self._handle_error(ConnectionError("trailing null-byte was not found"))
+            return
         connection.sendall(b'1')  # accept the connection
 
         for callback in self._on_connection_open:
@@ -126,7 +149,7 @@ class DebugServer:
     def _handle_one_message(self, fd: int):
         sock, client, rfile = self._connections[fd]
         body_format_identifier = rfile.read(1)
-        if not body_format_identifier:  # b''
+        if not body_format_identifier:  # b'' connection was closed
             self._close_connection(fd=fd)
             return
 
@@ -134,7 +157,9 @@ class DebugServer:
         body = rfile.read(length)
         body_parser = BODY_PARSER.get(body_format_identifier)
         if body_parser is None:  # unsupported
-            # todo: error message
+            self._handle_error(LookupError(f"unknown parser code received: {body_format_identifier.decode()!r}"))
+            # todo: add error feedback for the client so he doesn't connect again
+            # self._close_connection(fd=fd)  # assuming the format will stay the same
             return
         message: Message = body_parser(body)
         for callback in self._on_message:
