@@ -7,7 +7,7 @@ import functools
 from inspect import iscoroutinefunction
 from ..core import DebugClient
 from ..typing import ServerInfoRaw
-from .util import function_repr, format_delta_ns
+from ._util import function_repr, format_delta_ns
 
 
 class Decorator:
