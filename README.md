@@ -92,3 +92,20 @@ New Connection from 127.0.0.1 (localhost)
 15:09:23.947714 | 127.0.0.1 | __main__.my_function(name='debuglib') returned None after 3.716999799507903e-06s
 Connection closed from 127.0.0.1 (localhost)
 ```
+
+### crash-hook
+
+in case your program crashes, and you want to know the reason, you can install the custom excepthook
+
+with the shortcut
+```python
+import debuglib.hook.install  # noqa
+...
+```
+
+or the alternative/manual installation
+```python
+import debuglib.hook
+...
+debuglib.hook.hook()
+```
