@@ -136,7 +136,7 @@ class DebugServer:
             self._handle_error(ConnectionError(f"version mismatch ({version} != {DEBUGLIB_VERSION})"))
             return
         # trailing head to ensure everything was read correctly
-        if rfile.read(1) != '\0':
+        if rfile.read(1) != b'\0':
             connection.close()
             self._handle_error(ConnectionError("trailing null-byte was not found"))
             return
