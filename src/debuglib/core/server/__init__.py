@@ -90,25 +90,29 @@ class DebugServer:
 
     def on_connection_open(self, callback: T_CB_CONNECTION_OPEN):
         self._on_connection_open.append(callback)
+        return callback
 
     def on_connection_closed(self, callback: T_CB_CONNECTION_CLOSED):
         self._on_connection_closed.append(callback)
+        return callback
 
     def on_message(self, callback: T_CB_MESSAGE):
         self._on_message.append(callback)
+        return callback
 
     def on_error(self, callback: T_CB_ERROR):
         self._on_error.append(callback)
+        return callback
 
-    def _handle_error(self, err: Exception):
+    def _handle_error(self, error: Exception):
         if not self._on_error:  # no error handler registered
-            sys.stderr.write('\n'.join(format_exception(type(err), err, err.__traceback__)))
+            sys.stderr.write('\n'.join(format_exception(type(error), error, error.__traceback__)))
         else:
             for callback in self._on_error:
                 try:
-                    callback(err)
-                except Exception as err:
-                    sys.stderr.write('\n'.join(format_exception(type(err), err, err.__traceback__)))
+                    callback(error)
+                except Exception as cb_err:
+                    sys.stderr.write('\n'.join(format_exception(type(cb_err), cb_err, cb_err.__traceback__)))
 
     def _call_no_error(self, fn: t.Callable, *args, **kwargs):
         try:

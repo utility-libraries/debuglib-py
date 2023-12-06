@@ -30,6 +30,8 @@ class BlockingDebugHandler(logging.Handler):
 class NonBlockingDebugHandler(logging.handlers.QueueHandler):
     r"""
     Logging-Handler for high-performance code that queues the logs and sends them in another thread to the server
+
+    known to have problems with very short programs
     """
 
     def __init__(self, server_info: ServerInfoRaw = None):
