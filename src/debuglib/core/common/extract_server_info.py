@@ -2,7 +2,7 @@
 r"""
 
 """
-from ...typing import ServerInfo, ServerInfoRaw
+from ..._typing import ServerInfo, ServerInfoRaw
 from ...defaults import DEFAULT_SERVER_HOST, DEFAULT_SERVER_PORT
 
 

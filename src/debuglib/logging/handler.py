@@ -5,7 +5,7 @@ logging-handler to send messages to the debug-server
 import copy
 import queue
 import logging.handlers
-from ..typing import ServerInfoRaw
+from .._typing import ServerInfoRaw
 from ..core import DebugClient
 
 
@@ -21,7 +21,7 @@ class BlockingDebugHandler(logging.Handler):
     def emit(self, record: logging.LogRecord):
         self._client.send(
             message=f"{record.levelname} | {record.getMessage()}",
-            # body=...,
+            level=record.levelname,
             exception=record.exc_info[1] if record.exc_info else None,
             timestamp=record.created,
         )

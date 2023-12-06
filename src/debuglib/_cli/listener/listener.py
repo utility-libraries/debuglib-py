@@ -6,7 +6,7 @@ import socket
 from datetime import datetime
 from ...core.server import DebugServer
 from ...core.common import extract_server_info
-from ...typing import ServerInfoRaw, Message
+from ..._typing import ServerInfoRaw, Message
 
 
 class CLIListener:
@@ -37,15 +37,10 @@ class CLIListener:
     @staticmethod
     def on_message(message: Message, client: str):
         ts = datetime.fromtimestamp(message['timestamp']).strftime("%H:%M:%S.%f")
-        print(f"{ts} | {client} | {message['message']}")
-        body = message['body']
+        level = message['level'][:3].upper()
+        print(f"{ts} | {client} | {level:.3} | {message['message']}")
         exception_info = message['exception_info']
-        if body:
-            print(f"-" * 80)
-            print(body)
         if exception_info:
-            print(f"-" * 80)
             print(exception_info['traceback'])
             print(f"{exception_info['type']}: {exception_info['value']}")
-        if body or exception_info:
-            print(f"=" * 80)
+            print(f"-" * 80)

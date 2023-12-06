@@ -16,7 +16,7 @@ class ExceptionInfo(t.TypedDict):
 
 
 class Message(t.TypedDict):
-    message: str  # "short" message
-    body: t.Optional[str]  # longer more detailed message
+    message: str
+    level: str
     exception_info: t.Optional[ExceptionInfo]
     timestamp: float

@@ -14,11 +14,12 @@ import sys
 import time
 import socket
 import typing as t
+import logging
 # import uuid
 # noinspection PyPep8Naming
 from ... import __version__ as DEBUGLIB_VERSION
 from ..common import extract_server_info
-from ...typing import ServerInfo, ServerInfoRaw, Message
+from ..._typing import ServerInfo, ServerInfoRaw, Message
 try:
     # noinspection PyUnresolvedReferences
     from msgpack import dumps as dump_body
@@ -81,11 +82,12 @@ class DebugClient:
                 sys.stderr.write('\n'.join(format_exception(type(cb_err), cb_err, cb_err.__traceback__)))
 
     def send(self, message: str,
-             *, body: t.Optional[str] = None, exception: t.Optional[BaseException] = None, timestamp: float = None):
+             *, level: t.Optional[str] = None, exception: t.Optional[BaseException] = None,
+             timestamp: float = None):
         self._conn = conn = self._conn or self.create_connection()
         if conn is None:
             return
-        message = self.build_message(message=message, body=body, exception=exception, timestamp=timestamp)
+        message = self.build_message(message=message, level=level, exception=exception, timestamp=timestamp)
         body = self.format_message(message)
         try:
             conn.sendall(body)
@@ -95,13 +97,14 @@ class DebugClient:
     @staticmethod
     def build_message(
             message: str,
-            body: t.Optional[str] = None,
+            level: t.Optional[str] = None,
             exception: t.Optional[BaseException] = None,
             timestamp: float = None,
     ) -> Message:
+        level = (level or ("INFO" if exception is None else "ERROR"))[:3].upper()  # DEB|INF|WAR|ERR|CRI
         return Message(
             message=message,
-            body=body,
+            level=level,
             exception_info=dict(
                 type=type(exception).__name__,
                 value=str(exception),

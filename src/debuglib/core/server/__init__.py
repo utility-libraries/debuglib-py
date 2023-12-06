@@ -10,7 +10,7 @@ import threading
 import typing as t
 # noinspection PyPep8Naming
 from ... import __version__ as DEBUGLIB_VERSION
-from ...typing import ServerInfoRaw, Message
+from ..._typing import ServerInfoRaw, Message
 from ..common import extract_server_info
 try:
     import msgpack
