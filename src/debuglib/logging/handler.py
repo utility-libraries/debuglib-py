@@ -20,7 +20,7 @@ class BlockingDebugHandler(logging.Handler):
 
     def emit(self, record: logging.LogRecord):
         self._client.send(
-            message=f"{record.levelname} | {record.getMessage()}",
+            message=record.getMessage(),
             level=record.levelname,
             exception=record.exc_info[1] if record.exc_info else None,
             timestamp=record.created,
