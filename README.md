@@ -38,6 +38,8 @@ from debuglib.logging import BlockingDebugHandler
 logging.basicConfig(
     level=logging.DEBUG,
     handlers=[BlockingDebugHandler()],
+    # the following is also possible for tiny performance boost
+    # handlers=[logging.NullHandler() if prod else BlockingDebugHandler()],
 )
 
 logging.info("Hello World")
