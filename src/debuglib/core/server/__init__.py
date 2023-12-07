@@ -3,7 +3,6 @@ r"""
 
 """
 import sys
-import json
 import socket
 import select
 import threading
@@ -12,21 +11,14 @@ import typing as t
 from ... import __version__ as DEBUGLIB_VERSION
 from ..._typing import DEFAULT_VALUE, ServerInfoRaw, Message
 from ..common import extract_server_info
-try:
-    import msgpack
-except ModuleNotFoundError:
-    msgpack = None
-try:
-    from better_exceptions import format_exception
-except ModuleNotFoundError:
-    from traceback import format_exception
+from .._packages import format_exception, json
 
 
-BODY_PARSER = {
-    b'j': json.loads,
-}
-if msgpack:
-    BODY_PARSER[b'm'] = msgpack.loads
+# BODY_PARSER = {
+#     b'j': json.loads,
+# }
+# if msgpack is not None:
+#     BODY_PARSER[b'm'] = msgpack.loads
 
 
 T_CB_CONNECTION_OPEN = t.Callable[[str], None]
@@ -147,22 +139,37 @@ class DebugServer:
             self._call_no_error(callback, client)
         self._connections[connection.fileno()] = (connection, client, rfile)
 
+    # def _handle_one_message(self, fd: int):
+    #     sock, client, rfile = self._connections[fd]
+    #     body_format_identifier = rfile.read(1)
+    #     if not body_format_identifier:  # b'' connection was closed
+    #         self._close_connection(fd=fd)
+    #         return
+    #
+    #     length = int.from_bytes(rfile.read(2), byteorder='big', signed=False)
+    #     body = rfile.read(length)
+    #     body_parser = BODY_PARSER.get(body_format_identifier)
+    #     if body_parser is None:  # unsupported
+    #         self._handle_error(LookupError(f"unknown parser code received: {body_format_identifier.decode()!r}"))
+    #         # todo: add error feedback for the client so he doesn't connect again
+    #         # self._close_connection(fd=fd)  # assuming the format will stay the same
+    #         return
+    #
+    #     message: Message = body_parser(body)
+    #     for callback in self._on_message:
+    #         self._call_no_error(callback, message, client)
+
     def _handle_one_message(self, fd: int):
         sock, client, rfile = self._connections[fd]
         body_format_identifier = rfile.read(1)
-        if not body_format_identifier:  # b'' connection was closed
+        if not body_format_identifier:  # b'' -> connection was closed
             self._close_connection(fd=fd)
             return
 
         length = int.from_bytes(rfile.read(2), byteorder='big', signed=False)
         body = rfile.read(length)
-        body_parser = BODY_PARSER.get(body_format_identifier)
-        if body_parser is None:  # unsupported
-            self._handle_error(LookupError(f"unknown parser code received: {body_format_identifier.decode()!r}"))
-            # todo: add error feedback for the client so he doesn't connect again
-            # self._close_connection(fd=fd)  # assuming the format will stay the same
-            return
-        message: Message = body_parser(body)
+
+        message: Message = json.loads(body)
         for callback in self._on_message:
             self._call_no_error(callback, message, client)
 

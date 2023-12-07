@@ -11,13 +11,15 @@ from debuglib import __author__, __version__, __description__, __license__
 install_requires = []
 
 dev_requires = ["better-exceptions"]  # better exceptions formatting
-msgpack_requires = ["msgpack"]  # faster transmission
+# msgpack_requires = ["msgpack"]  # faster transmission
+orjson_requires = ["orjson"]  # fast packing/unpacking
 cli_requires = ["textual"]  # CLI-Interface
-all_requires = [dev_requires, msgpack_requires, cli_requires]
+all_requires = [dev_requires, orjson_requires, cli_requires]
 
 extras_require = {
     'dev': dev_requires,
-    'msgpack': msgpack_requires,
+    # 'msgpack': msgpack_requires,
+    'orjson': orjson_requires,
     'cli': cli_requires,
     'all': all_requires,
 }

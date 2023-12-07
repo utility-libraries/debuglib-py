@@ -18,22 +18,7 @@ import typing as t
 from ... import __version__ as DEBUGLIB_VERSION
 from ..common import extract_server_info
 from ..._typing import DEFAULT_VALUE, ServerInfo, ServerInfoRaw, Message
-try:
-    # noinspection PyUnresolvedReferences
-    from msgpack import dumps as dump_body
-    body_format_identifier = b'm'
-except ModuleNotFoundError:
-    from json import dumps as dump_body
-    body_format_identifier = b'j'
-try:
-    from better_exceptions import format_exception
-    from better_exceptions.formatter import ExceptionFormatter
-
-    def format_traceback(tb):
-        formatter = ExceptionFormatter()
-        return [formatter.format_traceback(tb)[0]]
-except ModuleNotFoundError:
-    from traceback import format_exception, format_tb as format_traceback
+from .._packages import json, format_traceback, format_exception
 
 
 T_CB_ON_ERROR = t.Callable[[Exception], None]
@@ -123,10 +108,10 @@ class DebugClient:
 
     @staticmethod
     def format_message(message: Message) -> bytes:
-        body = dump_body(message)
+        body = json.dumps(message)
         if isinstance(body, str):
             body = body.encode()
-        return body_format_identifier + len(body).to_bytes(2, byteorder='big', signed=False) + body
+        return b'j' + len(body).to_bytes(2, byteorder='big', signed=False) + body
 
     def create_connection(self) -> t.Optional[socket.socket]:
         r"""

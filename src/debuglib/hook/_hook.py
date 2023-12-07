@@ -14,6 +14,8 @@ original_hook: t.Optional[t.Callable[[t.Type[Exception], Exception, t.Any], None
 
 
 def excepthook(exc, val, tb):
+    # yes. Create a client for one message as the script should be crashing if this is called.
+    # so no need to keep a connection longer alive
     client = DebugClient()
     client.send("sys.excepthook", exception=val)
     client.close()
