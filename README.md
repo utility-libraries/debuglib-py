@@ -13,14 +13,33 @@ python debugger tool with easy integration into any program
 
 ```bash
 pip install debuglib
+pip install debuglib[all]  # recommended
 ```
 
-| extra               | description                      |
-|---------------------|----------------------------------|
-| `debuglib[dev]`     | better exceptions printing       |
-| `debuglib[msgpack]` | for possibly faster transmission |
-| `debuglib[cli]`     | required to run the CLI Debugger |
-| `debuglib[all]`     | installs all of the ones above   |
+| extra               | description                                                    | client/server |
+|---------------------|----------------------------------------------------------------|---------------|
+| `debuglib[dev]`     | better exceptions printing                                     | client        |
+| `debuglib[orjson]`  | for faster packing/unpacking                                   | client/server |
+| `debuglib[cli]`     | required to run the CLI Debugger                               | server        |
+| `debuglib[all]`     | installs all of the ones above                                 | -             |
+
+[//]: # (| `debuglib[msgpack]` | for possibly faster transmission speed through smaller packets | client+server |)
+
+> Note: It's recommended to install all for the best debugging experience
+
+### Why are there extras?
+
+There are two reasons why some dependencies are marked as extra.
+
+#### 1. Separation between script/program and debugger
+
+Some dependencies are only used for the client/script and some are only used by the debugger (CLI).
+In case you have different environments for both the dependencies work over extras
+
+#### 2. To not overload the environment
+
+The more dependencies your project has the likelier it is that version-conflicts arise or that your project gets to big.
+`debuglib` tries to avoid that by requiring as few dependencies as possible but offers support for various packages for a better debugging experience.
 
 ## Examples
 
@@ -51,7 +70,7 @@ except ValueError as error:
 ```
 
 ```bash
-$ debuglib listen  # and start the script in another terminal
+$ debuglib listen  # and start code.py in another terminal
 New Connection from 127.0.0.1 (localhost)
 23:48:42.183558 | 127.0.0.1 | INFO | Hello World
 23:48:42.184598 | 127.0.0.1 | ERROR | failed to convert to integer
@@ -83,16 +102,18 @@ def my_function(name: str = "World"):
     print(f"Hello {name}")
 
 my_function()
+my_function("debuglib")
 my_function(name="debuglib")
 ```
 
 ```bash
-$ debuglib listen  # and start the script in another terminal
+$ debuglib listen  # and start code.py in another terminal
 Listening on localhost:35353
-New Connection from 127.0.0.1 (localhost)
-15:09:23.947665 | 127.0.0.1 | __main__.my_function() returned None after 6.232000032468932e-06s
-15:09:23.947714 | 127.0.0.1 | __main__.my_function(name='debuglib') returned None after 3.716999799507903e-06s
-Connection closed from 127.0.0.1 (localhost)
+New Connection from 127.0.0.1:43998 (localhost)
+15:09:23.947665 | 127.0.0.1:43998 | INF | __main__.my_function() returned None after 6μs+803ns
+15:09:23.947693 | 127.0.0.1:43998 | INF | __main__.my_function('debuglib') returned None after 2μs+234ns
+15:09:23.947714 | 127.0.0.1:43998 | INF | __main__.my_function(name='debuglib') returned None after 2μs+405ns
+Connection closed from 127.0.0.1:43998 (localhost)
 ```
 
 ### crash-hook
@@ -110,4 +131,16 @@ or the alternative/manual installation
 import debuglib.hook
 ...
 debuglib.hook.hook()
+```
+
+```bash
+$ debuglib listen  # and start code.py in another terminal
+New Connection from 127.0.0.1:41302 (localhost)
+15:09:23.528303 | 127.0.0.1:41302 | ERR | sys.excepthook
+  File "/home/<user>/script.py", line 6, in <module>
+    raise RuntimeError("testing error")
+
+RuntimeError: testing error
+--------------------------------------------------------------------------------
+Connection closed from 127.0.0.1:41302 (localhost)
 ```
