@@ -2,12 +2,19 @@
 r"""
 
 """
-from ..._typing import ServerInfo, ServerInfoRaw
+from ..._typing import DEFAULT_VALUE, ServerInfo, ServerInfoRaw
 from ...defaults import DEFAULT_SERVER_HOST, DEFAULT_SERVER_PORT
 
 
 def extract_server_info(info: ServerInfoRaw) -> ServerInfo:
-    if info is None:  # take default
+    r"""
+    allowed formats
+    - None|DEFAULT_VALUE
+    - host
+    - port
+    - (host|None, port|None)
+    """
+    if info is None or info is DEFAULT_VALUE:  # take default
         return DEFAULT_SERVER_HOST, DEFAULT_SERVER_PORT
     elif isinstance(info, str):  # host specified
         return info, DEFAULT_SERVER_PORT

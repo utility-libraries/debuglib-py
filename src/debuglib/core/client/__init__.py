@@ -14,12 +14,10 @@ import sys
 import time
 import socket
 import typing as t
-import logging
-# import uuid
 # noinspection PyPep8Naming
 from ... import __version__ as DEBUGLIB_VERSION
 from ..common import extract_server_info
-from ..._typing import ServerInfo, ServerInfoRaw, Message
+from ..._typing import DEFAULT_VALUE, ServerInfo, ServerInfoRaw, Message
 try:
     # noinspection PyUnresolvedReferences
     from msgpack import dumps as dump_body
@@ -47,14 +45,24 @@ class DebugClient:
     _conn: t.Optional[socket.socket]
     _on_error: t.List[T_CB_ON_ERROR]
     _print_on_error: bool
-    _last_attempt: float  # todo limit connection attempts
+    _connection_attempt_delta: float
+    _next_connection_attempt: float
 
-    def __init__(self, *, server_info: ServerInfoRaw = None, timeout: float = None):
+    def __init__(self, *, server_info: ServerInfoRaw = DEFAULT_VALUE, timeout: float = DEFAULT_VALUE,
+                 connection_attempt_delta: float = DEFAULT_VALUE):
+        r"""
+
+        :param server_info: information about the server (host|port|(host, port))
+        :param timeout: socket timeout
+        :param connection_attempt_delta: delta between connection attempts
+        """
         self._server_info = extract_server_info(server_info)
-        self._timeout = timeout
-        self._conn = self.create_connection()
-        self._on_error = []
+        self._timeout = None if timeout is DEFAULT_VALUE else timeout
+        self._connection_attempt_delta = 0.1 if connection_attempt_delta is DEFAULT_VALUE else connection_attempt_delta
+        self._next_connection_attempt = 0.0
         self._print_on_error = False
+        self._on_error = []
+        self._conn = self.create_connection()
 
     def __del__(self):
         self.close()
@@ -125,7 +133,11 @@ class DebugClient:
         creates a connection and executes the handshake
         if the server cannot be found or rejects the connection this function returns None
         """
+        now = time.time()
+        if now < self._next_connection_attempt:
+            return None
         try:
+            self._next_connection_attempt = now + self._connection_attempt_delta
             sock = socket.create_connection(self._server_info, timeout=self._timeout)
             version = DEBUGLIB_VERSION.encode()
             version_bytes = len(version).to_bytes(1, byteorder='big', signed=False) + version

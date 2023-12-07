@@ -5,7 +5,7 @@ logging-handler to send messages to the debug-server
 import copy
 import queue
 import logging.handlers
-from .._typing import ServerInfoRaw
+from .._typing import ServerInfoRaw, DEFAULT_VALUE
 from ..core import DebugClient
 
 
@@ -14,9 +14,12 @@ class BlockingDebugHandler(logging.Handler):
     Logging-Handler that blocks as it waits till the message is sent to the server (if the server exists)
     """
 
-    def __init__(self, server_info: ServerInfoRaw = None):
+    def __init__(self, server_info: ServerInfoRaw = DEFAULT_VALUE,
+                 *, timeout: float = DEFAULT_VALUE, connection_attempt_delta: float = DEFAULT_VALUE):
         super().__init__()
-        self._client = DebugClient(server_info=server_info)
+        self._client = DebugClient(
+            server_info=server_info, timeout=timeout, connection_attempt_delta=connection_attempt_delta
+        )
 
     def emit(self, record: logging.LogRecord):
         self._client.send(
@@ -34,10 +37,13 @@ class NonBlockingDebugHandler(logging.handlers.QueueHandler):
     known to have problems with very short programs
     """
 
-    def __init__(self, server_info: ServerInfoRaw = None):
+    def __init__(self, server_info: ServerInfoRaw = DEFAULT_VALUE,
+                 *, timeout: float = DEFAULT_VALUE, connection_attempt_delta: float = DEFAULT_VALUE):
         self._queue = queue.Queue()
         super().__init__(self._queue)
-        self.__blocking_handler = BlockingDebugHandler(server_info=server_info)
+        self.__blocking_handler = BlockingDebugHandler(
+            server_info=server_info, timeout=timeout, connection_attempt_delta=connection_attempt_delta
+        )
         self._listener = logging.handlers.QueueListener(self._queue, self.__blocking_handler)
         self._listener.start()
 

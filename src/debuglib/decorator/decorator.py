@@ -6,12 +6,12 @@ import time
 import functools
 from inspect import iscoroutinefunction
 from ..core import DebugClient
-from .._typing import ServerInfoRaw
+from .._typing import DEFAULT_VALUE, ServerInfoRaw
 from ._util import function_repr, format_delta_ns
 
 
 class Decorator:
-    def __init__(self, server: ServerInfoRaw = None):
+    def __init__(self, server: ServerInfoRaw = DEFAULT_VALUE):
         self._client = DebugClient(server_info=server)
 
     def __del__(self):

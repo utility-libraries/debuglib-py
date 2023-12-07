@@ -5,6 +5,9 @@ r"""
 import typing as t
 
 
+DEFAULT_VALUE = object()
+
+
 ServerInfo = t.Tuple[str, int]
 ServerInfoRaw = t.Union[None, str, int, ServerInfo]
 

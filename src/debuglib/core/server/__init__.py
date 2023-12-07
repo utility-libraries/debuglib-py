@@ -10,7 +10,7 @@ import threading
 import typing as t
 # noinspection PyPep8Naming
 from ... import __version__ as DEBUGLIB_VERSION
-from ..._typing import ServerInfoRaw, Message
+from ..._typing import DEFAULT_VALUE, ServerInfoRaw, Message
 from ..common import extract_server_info
 try:
     import msgpack
@@ -20,9 +20,6 @@ try:
     from better_exceptions import format_exception
 except ModuleNotFoundError:
     from traceback import format_exception
-
-# import socketserver
-# socketserver.BaseServer.serve_forever
 
 
 BODY_PARSER = {
@@ -49,14 +46,14 @@ class DebugServer:
     _shutdown_requested: bool
     _is_shut_down: threading.Event
 
-    def __init__(self, server_info: ServerInfoRaw = None, *, skip_version_check: bool = False):
+    def __init__(self, server_info: ServerInfoRaw = DEFAULT_VALUE, *, skip_version_check: bool = DEFAULT_VALUE):
         self._server = socket.create_server(address=extract_server_info(server_info))
         self._connections = {}
         self._on_message = []
         self._on_error = []
         self._on_connection_open = []
         self._on_connection_closed = []
-        self._skip_version_check = skip_version_check
+        self._skip_version_check = False if skip_version_check is DEFAULT_VALUE else skip_version_check
         self._shutdown_requested = False
         self._is_shut_down = threading.Event()
 

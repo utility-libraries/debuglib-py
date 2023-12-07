@@ -33,3 +33,5 @@ __status__ = "Prototype"  # Prototype, Development, Production
 __description__ = "python debugger tool with easy integration into any program"
 __version_info__ = (0, 0, 0)
 __version__ = '.'.join(map(str, __version_info__))
+
+from ._typing import DEFAULT_VALUE
