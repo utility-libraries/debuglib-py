@@ -31,7 +31,7 @@ __maintainer__ = "PlayerG9"
 __email__ = None
 __status__ = "Prototype"  # Prototype, Development, Production
 __description__ = "python debugger tool with easy integration into any program"
-__version_info__ = (0, 0, 0)
+__version_info__ = (0, 1, 0)
 __version__ = '.'.join(map(str, __version_info__))
 
 from ._typing import DEFAULT_VALUE
