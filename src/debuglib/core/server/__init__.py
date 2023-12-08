@@ -169,7 +169,7 @@ class DebugServer:
         length = int.from_bytes(rfile.read(2), byteorder='big', signed=False)
         body = rfile.read(length)
 
-        message: Message = json.loads(body)
+        message: Message = self.validate_message(json.loads(body))
         for callback in self._on_message:
             self._call_no_error(callback, message, client)
 
@@ -180,3 +180,25 @@ class DebugServer:
         del self._connections[fd]
         for callback in self._on_connection_closed:
             self._call_no_error(callback, client)
+
+    def validate_message(self, raw: dict) -> Message:
+        import time
+
+        message: Message = Message(
+            message="<no message>",
+            level="INFO",
+            exception_info=None,
+            timestamp=time.time()
+        )
+
+        unknown_keys = set(raw) - set(message)
+        if unknown_keys:
+            self._handle_error(KeyError(f"Unknown keys received: {', '.join(unknown_keys)}"))
+            # for key in unknown_keys:
+            #     raw.pop(key)
+
+        message.update(raw)
+
+        message['level'] = message['level'][:3].upper()
+
+        return message
