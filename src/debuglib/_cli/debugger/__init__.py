@@ -2,3 +2,4 @@
 r"""
 Interactive Command-Line-Interface with Textual
 """
+from .debugger import CLIDebugger

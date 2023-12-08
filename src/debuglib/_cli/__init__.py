@@ -2,4 +2,5 @@
 r"""
 
 """
+from .debugger import CLIDebugger
 from .listener import CLIListener

@@ -1,3 +1,4 @@
 better-exceptions
-msgpack
+#msgpack
 orjson
+textual

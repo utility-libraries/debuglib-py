@@ -10,7 +10,7 @@ import typing as t
 # noinspection PyPep8Naming
 from ... import __version__ as DEBUGLIB_VERSION
 from ..._packages import format_exception, json
-from ..._typing import DEFAULT_VALUE, ServerInfoRaw, Message
+from ..._typing import DEFAULT_VALUE, ServerInfoRaw, ServerInfo, Message
 from ..common import extract_server_info
 
 
@@ -28,6 +28,7 @@ T_CB_ERROR = t.Callable[[Exception], None]
 
 
 class DebugServer:
+    _server_info: ServerInfo
     _server: socket.socket
     _connections: t.Dict[int, t.Tuple[socket.socket, str, t.BinaryIO]]
     _on_connection_open: t.List[T_CB_CONNECTION_OPEN]
@@ -39,7 +40,8 @@ class DebugServer:
     _is_shut_down: threading.Event
 
     def __init__(self, server_info: ServerInfoRaw = DEFAULT_VALUE, *, skip_version_check: bool = DEFAULT_VALUE):
-        self._server = socket.create_server(address=extract_server_info(server_info))
+        self._server_info = extract_server_info(server_info)
+        self._server = socket.create_server(address=server_info)
         self._connections = {}
         self._on_message = []
         self._on_error = []
@@ -54,6 +56,10 @@ class DebugServer:
 
     def close(self):
         self._server.close()
+
+    @property
+    def server_info(self) -> ServerInfo:
+        return self._server_info
 
     def serve_forever(self):
         self._shutdown_requested = False

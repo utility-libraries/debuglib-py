@@ -57,6 +57,10 @@ class DebugClient:
             self._conn.close()
             self._conn = None
 
+    @property
+    def server_info(self) -> ServerInfo:
+        return self._server_info
+
     def on_error(self, callback: T_CB_ON_ERROR):
         self._on_error.append(callback)
         return callback
