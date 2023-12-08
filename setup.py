@@ -8,6 +8,23 @@ import setuptools
 from debuglib import __author__, __version__, __description__, __license__
 
 
+install_requires = []
+
+dev_requires = ["better-exceptions"]  # better exceptions formatting
+# msgpack_requires = ["msgpack"]  # faster transmission
+orjson_requires = ["orjson"]  # fast packing/unpacking
+cli_requires = ["textual"]  # CLI-Interface
+all_requires = [dev_requires, orjson_requires, cli_requires]
+
+extras_require = {
+    'dev': dev_requires,
+    # 'msgpack': msgpack_requires,
+    'orjson': orjson_requires,
+    'cli': cli_requires,
+    'all': all_requires,
+}
+
+
 setuptools.setup(
     name="debuglib",
     version=__version__,
@@ -40,6 +57,8 @@ setuptools.setup(
         "Topic :: Utilities",
     ],
     python_requires=">=3.6",
+    install_requires=install_requires,
+    extras_require=extras_require,
     entry_points={
         "console_scripts": [
             "debuglib = debuglib.__main__:main"
