@@ -9,9 +9,9 @@ import threading
 import typing as t
 # noinspection PyPep8Naming
 from ... import __version__ as DEBUGLIB_VERSION
+from ..._packages import format_exception, json
 from ..._typing import DEFAULT_VALUE, ServerInfoRaw, Message
 from ..common import extract_server_info
-from .._packages import format_exception, json
 
 
 # BODY_PARSER = {

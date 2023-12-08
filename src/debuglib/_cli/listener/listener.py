@@ -7,6 +7,7 @@ from datetime import datetime
 from ...core.server import DebugServer
 from ...core.common import extract_server_info
 from ..._typing import ServerInfoRaw, Message
+from ..._packages import format_exception
 
 
 class CLIListener:
@@ -16,6 +17,7 @@ class CLIListener:
         self._server.on_connection_open(self.on_connection_open)
         self._server.on_connection_closed(self.on_connection_closed)
         self._server.on_message(self.on_message)
+        self._server.on_error(self.on_error)
 
     def run(self):
         print(f"Listening on {self.server_info[0]}:{self.server_info[1]}")
@@ -43,4 +45,10 @@ class CLIListener:
         if exception_info:
             print(exception_info['traceback'])
             print(f"{exception_info['type']}: {exception_info['value']}")
-            print(f"-" * 80)
+            print("-" * 80)
+
+    @staticmethod
+    def on_error(error: Exception):
+        print("-", "<Server Error>", '-' * 62)
+        print('\n'.join(format_exception(error)))  # file=sys.stderr?
+        print("-" * 80)

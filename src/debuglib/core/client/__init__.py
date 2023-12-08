@@ -16,9 +16,9 @@ import socket
 import typing as t
 # noinspection PyPep8Naming
 from ... import __version__ as DEBUGLIB_VERSION
+from ..._packages import json, format_traceback, format_exception
 from ..._typing import DEFAULT_VALUE, ServerInfo, ServerInfoRaw, Message
 from ..common import extract_server_info
-from .._packages import json, format_traceback, format_exception
 
 
 T_CB_ON_ERROR = t.Callable[[Exception], None]
