@@ -18,7 +18,7 @@ import typing as t
 from ... import __version__ as DEBUGLIB_VERSION
 from ..._packages import json, format_traceback, format_exception
 from ..._typing import DEFAULT_VALUE, ServerInfo, ServerInfoRaw, Message
-from ..common import extract_server_info
+from ..common import extract_server_info, get_prog
 
 
 T_CB_ON_ERROR = t.Callable[[Exception], None]
@@ -101,6 +101,7 @@ class DebugClient:
         level = (level or ("INFO" if exception is None else "ERROR"))[:3].upper()  # DEB|INF|WAR|ERR|CRI
         return Message(
             message=message,
+            program=get_prog(),
             level=level,
             exception_info=dict(
                 type=type(exception).__name__,

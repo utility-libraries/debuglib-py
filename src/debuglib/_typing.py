@@ -20,6 +20,7 @@ class ExceptionInfo(t.TypedDict):
 
 class Message(t.TypedDict):
     message: str
+    program: str
     level: str
     exception_info: t.Optional[ExceptionInfo]
     timestamp: float
