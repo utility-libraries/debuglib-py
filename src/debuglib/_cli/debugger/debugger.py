@@ -5,11 +5,31 @@ r"""
 import threading
 from io import StringIO
 from datetime import datetime
+from collections import defaultdict
+from rich.markup import escape  # noqa
 import textual.binding
 from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer
 from ..._typing import ServerInfoRaw, Message
 from ...core import DebugServer
+from ..._packages import format_traceback
+
+
+LEVEL2COLOR = {
+    "DEB": "grey37",
+    "INF": "green1",
+    "WAR": "yellow3",
+    "ERR": "red3",
+    "CRI": "bright_red",
+}
+
+
+def new_random_color() -> str:
+    import random
+    r = random.randint(128, 255)
+    g = random.randint(128, 255)
+    b = random.randint(128, 255)
+    return f"[rgb({r},{g},{b})]"
 
 
 class CLIDebugger(App):
@@ -35,6 +55,8 @@ class CLIDebugger(App):
         self._server.on_connection_closed(self.server_on_connection_closed)
         self._server.on_message(self.server_on_message)
         self._server.on_error(self.server_on_error)
+        self._client_color_map = defaultdict(new_random_color)
+        self._program_color_map = defaultdict(new_random_color)
 
     def exit(self, *args, **kwargs) -> None:
         self._server.shutdown()
@@ -42,18 +64,27 @@ class CLIDebugger(App):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        yield textual.widgets.Log()
+        yield textual.widgets.RichLog(max_lines=100_000, highlight=False, markup=True)
         yield Footer()
 
     @property
-    def message_log(self) -> textual.widgets.Log:
-        return self.query_one(textual.widgets.Log)
+    def message_log(self) -> textual.widgets.RichLog:
+        return self.query_one(textual.widgets.RichLog)
+
+    def write(self, message: str):
+        self.message_log.write(message)
+
+    def highlight(self, text: str):
+        from rich.text import Text  # noqa
+        return self.message_log.highlighter(Text(escape(text))).markup
 
     def on_mount(self) -> None:
         self._thread = threading.Thread(target=self._server.serve_forever, name="debuglib server mainloop")
         self._thread.start()
 
-        self.message_log.write(f"Listening on {self._server.server_info[0]}:{self._server.server_info[1]}\n")
+        self.write(f"[turquoise2]Listening on {self._server.server_info[0]}:{self._server.server_info[1]}[/]")
+        self.write(f"[turquoise2]{'Timestamp'.center(15)} | {'client'.center(15)} | {'program'.center(10)} "
+                   f"| {'LVL'} | {'Message'}[/]")
 
     def server_on_connection_open(self, client: str) -> None:
         import socket
@@ -64,6 +95,9 @@ class CLIDebugger(App):
             severity="information",
             timeout=5,
         )
+        self.write(f"[turquoise2]New Connection from[/] "
+                   f"{self._client_color_map[client]}{client}[/] "
+                   f"[turquoise2]({escape(domain_name)})[/]")
 
     def server_on_connection_closed(self, client: str) -> None:
         import socket
@@ -74,21 +108,33 @@ class CLIDebugger(App):
             severity="information",
             timeout=5,
         )
+        self.write(f"[turquoise2]Connection closed from[/] "
+                   f"{self._client_color_map[client]}{client}[/] "
+                   f"[turquoise2]({escape(domain_name)})[/]")
+        del self._client_color_map[client]  # cleanup
 
     def server_on_message(self, message: Message, client: str) -> None:
         text = StringIO()
 
         ts = datetime.fromtimestamp(message['timestamp']).strftime("%H:%M:%S.%f")
         level = message['level'][:3].upper()
+        program = message['program']
 
-        text.write(f"{ts} | {client} | {level:.3} | {message['message']}\n")
+        text.write(" | ".join([
+            f"[turquoise2]{ts}[/]",
+            f"{self._client_color_map[client]}{client}[/]",
+            f"{self._program_color_map[program]}{program.ljust(10)}[/]",
+            f"[{LEVEL2COLOR.get(level, '')}]{level:.3}[/]",
+            f"{message['message']}"
+        ]))
 
         exception_info = message['exception_info']
         if exception_info:
-            text.write(exception_info['traceback'])
-            text.write(f"{exception_info['type']}: {exception_info['value']}\n")
+            text.write(f"\n"
+                       f"{self.highlight(exception_info['traceback'])}\n"
+                       f"[red]{exception_info['type']}:[/] {self.highlight(exception_info['value'])}")
 
-        self.message_log.write(text.getvalue())
+        self.write(text.getvalue())
 
     def server_on_error(self, error: Exception) -> None:
         self.notify(
@@ -97,3 +143,8 @@ class CLIDebugger(App):
             severity="error",
             timeout=5,
         )
+        exc_str = '\n'.join(format_traceback(error.__traceback__))
+        self.write(f"----- <Server Error> -----------------------------------------------------------\n"
+                   f"{self.highlight(exc_str)}\n"
+                   f"[red]{type(error).__name__}:[/] {self.highlight(str(error))}\n"
+                   f"--------------------------------------------------------------------------------")
