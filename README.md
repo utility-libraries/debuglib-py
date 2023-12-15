@@ -39,6 +39,26 @@ In case you have different environments for both the dependencies work over extr
 The more dependencies your project has the likelier it is that version-conflicts arise or that your project gets to big.
 `debuglib` tries to avoid that by requiring as few dependencies as possible but offers support for various packages for a better debugging experience.
 
+## Screenshots
+
+`debuglib debugger`
+![CLI-Debugger](README.assets/clidebugger-example.svg)
+
+`debuglib listen`
+```
+New Connection from 127.0.0.1 (localhost)
+23:48:42.183558 | 127.0.0.1 | INFO | Hello World
+23:48:42.184598 | 127.0.0.1 | ERROR | failed to convert to integer
+--------------------------------------------------------------------------------
+  File "/home/<user>/code.py", line 12, in <module>
+    print(int(num))
+              └ 'Hi'
+
+ValueError: invalid literal for int() with base 10: 'Hi'
+================================================================================
+Connection closed from 127.0.0.1 (localhost)
+```
+
 ## Examples
 
 > Note: there is no need for a server to run/exist.

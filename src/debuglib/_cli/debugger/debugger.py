@@ -38,6 +38,7 @@ class CLIDebugger(App):
         textual.app.Binding("ctrl+q", "quit", "Quit", show=False),  # unix-like
         textual.app.Binding("ctrl+x", "quit", "Quit", show=False),  # nano-like
         # textual.binding.Binding("ctrl+d", 'toggle_dark', "Toggle Dark-Mode"),
+        # textual.app.Binding("f5", "screenshot", "Screenshot", show=True),
     ]
 
     CSS = r"""
