@@ -47,8 +47,8 @@ The more dependencies your project has the likelier it is that version-conflicts
 ### `$ debuglib listen`
 ```
 New Connection from 127.0.0.1 (localhost)
-23:48:42.183558 | 127.0.0.1 | INFO | Hello World
-23:48:42.184598 | 127.0.0.1 | ERROR | failed to convert to integer
+23:48:42.183558 | 127.0.0.1 | test       | INF | Hello World
+23:48:42.184598 | 127.0.0.1 | test       | ERR | failed to convert to integer
 --------------------------------------------------------------------------------
   File "/home/<user>/code.py", line 12, in <module>
     print(int(num))
@@ -90,8 +90,8 @@ except ValueError as error:
 ```bash
 $ debuglib listen  # and start code.py in another terminal
 New Connection from 127.0.0.1 (localhost)
-23:48:42.183558 | 127.0.0.1 | INFO | Hello World
-23:48:42.184598 | 127.0.0.1 | ERROR | failed to convert to integer
+23:48:42.183558 | 127.0.0.1 | code       | INF | Hello World
+23:48:42.184598 | 127.0.0.1 | code       | ERR | failed to convert to integer
 --------------------------------------------------------------------------------
   File "/home/<user>/code.py", line 12, in <module>
     print(int(num))
@@ -126,9 +126,9 @@ my_function(name="debuglib")
 $ debuglib listen  # and start code.py in another terminal
 Listening on localhost:35353
 New Connection from 127.0.0.1:43998 (localhost)
-15:09:23.947665 | 127.0.0.1:43998 | INF | __main__.my_function() returned None after 6μs+803ns
-15:09:23.947693 | 127.0.0.1:43998 | INF | __main__.my_function('debuglib') returned None after 2μs+234ns
-15:09:23.947714 | 127.0.0.1:43998 | INF | __main__.my_function(name='debuglib') returned None after 2μs+405ns
+15:09:23.947665 | 127.0.0.1:43998 | code       | INF | __main__.my_function() returned None after 6μs+803ns
+15:09:23.947693 | 127.0.0.1:43998 | code       | INF | __main__.my_function('debuglib') returned None after 2μs+234ns
+15:09:23.947714 | 127.0.0.1:43998 | code       | INF | __main__.my_function(name='debuglib') returned None after 2μs+405ns
 Connection closed from 127.0.0.1:43998 (localhost)
 ```
 
@@ -152,7 +152,7 @@ debuglib.hook.hook()
 ```bash
 $ debuglib listen  # and start code.py in another terminal
 New Connection from 127.0.0.1:41302 (localhost)
-15:09:23.528303 | 127.0.0.1:41302 | ERR | sys.excepthook
+15:09:23.528303 | 127.0.0.1:41302 | code       | ERR | sys.excepthook
   File "/home/<user>/script.py", line 6, in <module>
     raise RuntimeError("testing error")
 
