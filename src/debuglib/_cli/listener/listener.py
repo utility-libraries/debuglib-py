@@ -40,7 +40,7 @@ class CLIListener:
     def on_message(message: Message, client: str):
         ts = datetime.fromtimestamp(message['timestamp']).strftime("%H:%M:%S.%f")
         level = message['level'][:3].upper()
-        print(f"{ts} | {client} | {message['program']} | {level:.3} | {message['message']}")
+        print(f"{ts} | {client} | {message['program']:<10} | {level:.3} | {message['message']}")
         exception_info = message['exception_info']
         if exception_info:
             print(exception_info['traceback'], flush=False)
