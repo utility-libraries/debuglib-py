@@ -49,13 +49,12 @@ The more dependencies your project has the likelier it is that version-conflicts
 New Connection from 127.0.0.1 (localhost)
 23:48:42.183558 | 127.0.0.1 | test       | INF | Hello World
 23:48:42.184598 | 127.0.0.1 | test       | ERR | failed to convert to integer
---------------------------------------------------------------------------------
   File "/home/<user>/code.py", line 12, in <module>
     print(int(num))
               └ 'Hi'
 
 ValueError: invalid literal for int() with base 10: 'Hi'
-================================================================================
+--------------------------------------------------------------------------------
 Connection closed from 127.0.0.1 (localhost)
 ```
 
@@ -92,13 +91,12 @@ $ debuglib listen  # and start code.py in another terminal
 New Connection from 127.0.0.1 (localhost)
 23:48:42.183558 | 127.0.0.1 | code       | INF | Hello World
 23:48:42.184598 | 127.0.0.1 | code       | ERR | failed to convert to integer
---------------------------------------------------------------------------------
   File "/home/<user>/code.py", line 12, in <module>
     print(int(num))
               └ 'Hi'
 
 ValueError: invalid literal for int() with base 10: 'Hi'
-================================================================================
+--------------------------------------------------------------------------------
 Connection closed from 127.0.0.1 (localhost)
 ```
 
