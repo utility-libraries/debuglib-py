@@ -41,10 +41,10 @@ The more dependencies your project has the likelier it is that version-conflicts
 
 ## Screenshots
 
-`debuglib debugger`
+### `$ debuglib debugger`
 ![CLI-Debugger](README.assets/clidebugger-example.svg)
 
-`debuglib listen`
+### `$ debuglib listen`
 ```
 New Connection from 127.0.0.1 (localhost)
 23:48:42.183558 | 127.0.0.1 | INFO | Hello World
