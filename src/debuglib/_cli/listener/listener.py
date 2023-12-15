@@ -40,15 +40,15 @@ class CLIListener:
     def on_message(message: Message, client: str):
         ts = datetime.fromtimestamp(message['timestamp']).strftime("%H:%M:%S.%f")
         level = message['level'][:3].upper()
-        print(f"{ts} | {client} | {level:.3} | {message['message']}")
+        print(f"{ts} | {client} | {message['program']} | {level:.3} | {message['message']}")
         exception_info = message['exception_info']
         if exception_info:
-            print(exception_info['traceback'])
-            print(f"{exception_info['type']}: {exception_info['value']}")
-            print("-" * 80)
+            print(exception_info['traceback'], flush=False)
+            print(f"{exception_info['type']}: {exception_info['value']}", flush=False)
+            print("--------------------------------------------------------------------------------")
 
     @staticmethod
     def on_error(error: Exception):
-        print("-", "<Server Error>", '-' * 62)
-        print('\n'.join(format_exception(error)))  # file=sys.stderr?
-        print("-" * 80)
+        print("----- <Server Error> -----------------------------------------------------------", flush=False)
+        print('\n'.join(format_exception(type(error), error, error.__traceback__)), flush=False)  # file=sys.stderr?
+        print("--------------------------------------------------------------------------------")
