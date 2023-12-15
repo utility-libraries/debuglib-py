@@ -66,7 +66,7 @@ class DebugServer:
         self._is_shut_down.clear()
         try:
             while not self._shutdown_requested:
-                readable, *_ = select.select([self._server, *self._connections], [], [], 0.5)
+                readable, *_ = select.select([self._server, *self._connections], [], [], 0.25)
                 # bpo-35017: shutdown() called during select(), exit immediately.
                 if self._shutdown_requested:
                     break
@@ -99,7 +99,22 @@ class DebugServer:
         self._on_error.append(callback)
         return callback
 
-    def _handle_error(self, error: Exception):
+    def _handle_error(self, error: Exception, *, add_traceback: bool = False, max_traceback_depth: int = 99):
+        if error.__traceback__ is None and add_traceback:
+            import types
+            tb = None
+            depth = 1  # skip this function
+            while depth <= max_traceback_depth:
+                try:
+                    frame = sys._getframe(depth)  # noqa
+                    depth += 1
+                except ValueError:
+                    break
+
+                tb = types.TracebackType(tb, frame, frame.f_lasti, frame.f_lineno)
+
+            error = error.with_traceback(tb)
+
         if not self._on_error:  # no error handler registered
             sys.stderr.write('\n'.join(format_exception(type(error), error, error.__traceback__)))
         else:
@@ -125,19 +140,22 @@ class DebugServer:
         head = b'DEBUGLIB\0'
         if rfile.read(len(head)) != head:
             connection.close()
-            self._handle_error(ConnectionError("bad connection attempt was made"))
+            self._handle_error(ConnectionError("bad connection attempt was made"),
+                               add_traceback=True)
             return
         # compare versions (could be improved to only check major.minor)
         version_length = int.from_bytes(rfile.read(1), byteorder='big', signed=False)
         version = rfile.read1(version_length).decode()
         if not self._skip_version_check and version != DEBUGLIB_VERSION:
             connection.close()
-            self._handle_error(ConnectionError(f"version mismatch ({version} != {DEBUGLIB_VERSION})"))
+            self._handle_error(ConnectionError(f"version mismatch ({version} != {DEBUGLIB_VERSION})"),
+                               add_traceback=True)
             return
         # trailing head to ensure everything was read correctly
         if rfile.read(1) != b'\0':
             connection.close()
-            self._handle_error(ConnectionError("trailing null-byte was not found"))
+            self._handle_error(ConnectionError("trailing null-byte was not found"),
+                               add_traceback=True)
             return
         connection.sendall(b'1')  # accept the connection
 
@@ -192,6 +210,7 @@ class DebugServer:
 
         message: Message = Message(
             message="<no message>",
+            program="<unknown>",
             level="INFO",
             exception_info=None,
             timestamp=time.time()
@@ -199,7 +218,8 @@ class DebugServer:
 
         unknown_keys = set(raw) - set(message)
         if unknown_keys:
-            self._handle_error(KeyError(f"Unknown keys received: {', '.join(unknown_keys)}"))
+            self._handle_error(KeyError(f"Unknown keys received: {', '.join(map(repr, unknown_keys))}"),
+                               add_traceback=True, max_traceback_depth=2)
             # for key in unknown_keys:
             #     raw.pop(key)
 
